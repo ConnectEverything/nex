@@ -34,6 +34,7 @@ get_arch() {
 
 arch=$(get_arch)
 runc_uri="https://github.com/opencontainers/runc/releases/latest/download/runc.${arch}"
-curl -O --output-dir /usr/local/bin ${runc_uri}
+curl -L ${runc_uri} -o /usr/local/bin/runc
+chmod +x /usr/local/bin/runc
 `
 )
