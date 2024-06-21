@@ -1,14 +1,15 @@
 [Unit]
 Description=Nex Agent
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 User=nex
 Group=nex
 ExecStart=/usr/local/bin/agent
 KillSignal=SIGINT
-StandardOutput=file:/home/user/nex.log
-StandardError=file:/home/user/err.log
+StandardOutput=file:/home/nex/nex.log
+StandardError=file:/home/nex/err.log
 Type=simple
 Restart=always
 

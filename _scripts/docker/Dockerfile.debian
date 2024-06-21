@@ -1,0 +1,15 @@
+FROM debian:bookworm-slim
+
+RUN apt-get update
+RUN apt-get install -y init iproute2 ca-certificates dbus-user-session
+
+ADD agent.service /etc/systemd/system/agent.service
+ADD nex-agent /usr/local/bin/agent
+RUN chmod +x /usr/local/bin/agent
+
+RUN echo "root:root" | chpasswd
+
+RUN addgroup --system --gid 1000 nex
+RUN adduser --system --uid 1000 --gid 1000 --home /home/nex nex
+
+RUN systemctl enable agent.service
