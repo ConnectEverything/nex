@@ -15,7 +15,29 @@ import (
 	"dagger.io/dagger"
 )
 
-func Build(outname, buildScript, baseImg, agentPath string, fsSize int) error {
+const defaultBaseImage string = "synadia/nex-rootfs:alpine"
+
+func Build(outname, buildScript, baseImg, agentPath string, fsSize int, profile string) error {
+	if buildScript != "" && profile != "" {
+		return errors.New("supplied both buildScript and profile, please choose one")
+	}
+	if baseImg != "" && profile != "" {
+		return errors.New("supplied both a base image and profile, please choose one")
+	}
+	if baseImg == "" {
+		baseImg = defaultBaseImage
+	}
+	if profile != "" {
+		if _, ok := profiles[profile]; !ok {
+			return errors.New("invalid profile provided")
+		}
+		baseImg = profiles[profile].BaseImage
+		buildScript = profiles[profile].BootstrapScript
+		if fsSize < profiles[profile].Size {
+			fsSize = profiles[profile].Size
+		}
+	}
+
 	if os.Getuid() != 0 {
 		return errors.New("Please run as root")
 	}
@@ -32,15 +54,20 @@ func Build(outname, buildScript, baseImg, agentPath string, fsSize int) error {
 	defer os.RemoveAll(tempdir)
 
 	var bS *os.File
+	var bS_r []byte
 	if buildScript != "" {
 		var err error
-		bS, err = os.Open(buildScript)
-		if err != nil {
-			return err
-		}
-		bS_r, err := io.ReadAll(bS)
-		if err != nil {
-			return nil
+		if profile == "" {
+			bS, err = os.Open(buildScript)
+			if err != nil {
+				return err
+			}
+			bS_r, err = io.ReadAll(bS)
+			if err != nil {
+				return nil
+			}
+		} else {
+			bS_r = []byte(buildScript)
 		}
 		err = os.WriteFile(filepath.Join(tempdir, "buildscript.sh"), bS_r, 0644)
 		if err != nil {
@@ -103,7 +130,7 @@ func Build(outname, buildScript, baseImg, agentPath string, fsSize int) error {
 		return errors.New(string(output) + "\n\n" + err.Error())
 	}
 
-	return build(context.Background(), tempdir, mountPoint, baseImg, outname, bS != nil)
+	return build(context.Background(), tempdir, mountPoint, baseImg, outname, buildScript != "")
 }
 
 func build(ctx context.Context, tempdir, mountPoint, baseImg, outname string, withBuildScript bool) error {
@@ -133,7 +160,6 @@ func build(ctx context.Context, tempdir, mountPoint, baseImg, outname string, wi
 			WithMountedFile("/usr/local/bin/agent", nexagent).
 			WithFile("/copy_fs.sh", copyFsScript).
 			WithExec([]string{"sh", "/copy_fs.sh"}).
-			WithExec([]string{"chown", "1000:1000", "/etc/init.d/agent"}).
 			WithExec([]string{"chown", "-R", "1000:1000", "/home/nex"}).
 			WithExec([]string{"chown", "1000:1000", "/usr/local/bin/agent"})
 
@@ -152,10 +178,8 @@ func build(ctx context.Context, tempdir, mountPoint, baseImg, outname string, wi
 			WithExec([]string{"sh", "/buildscript.sh"}).
 			WithFile("/copy_fs.sh", copyFsScript).
 			WithExec([]string{"sh", "/copy_fs.sh"}).
-			WithExec([]string{"chown", "1000:1000", "/etc/init.d/agent"}).
 			WithExec([]string{"chown", "-R", "1000:1000", "/home/nex"}).
 			WithExec([]string{"chown", "1000:1000", "/usr/local/bin/agent"})
-
 	}
 
 	_, err = c.Directory("/tmp/rootfs").
@@ -168,24 +192,20 @@ func build(ctx context.Context, tempdir, mountPoint, baseImg, outname string, wi
 	if err != nil {
 		return err
 	}
-	err = os.Chown(filepath.Join(mountPoint, "/home/nex"), 1000, 1000)
-	if err != nil {
-		return err
-	}
-	err = os.Chown(filepath.Join(mountPoint, "/etc/init.d/agent"), 1000, 1000)
-	if err != nil {
-		return err
-	}
 	err = os.Chown(filepath.Join(mountPoint, "/usr/local/bin/agent"), 1000, 1000)
 	if err != nil {
 		return err
 	}
 
-	err = os.Remove(filepath.Join(mountPoint, "/etc/resolv.conf"))
+	err = os.Chown(filepath.Join(mountPoint, "/home/nex"), 1000, 1000)
 	if err != nil {
 		return err
 	}
 
+	// We dont check this error because it is fine if it didnt exist in the first place
+	_ = os.Remove(filepath.Join(mountPoint, "/etc/resolv.conf"))
+
+	// Allows for DNS in firecracker
 	err = os.Symlink("/proc/net/pnp", filepath.Join(mountPoint, "/etc/resolv.conf"))
 	if err != nil {
 		return err

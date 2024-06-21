@@ -107,6 +107,7 @@ type RootfsOptions struct {
 	BuildScriptPath string
 	AgentBinaryPath string
 	RootFSSize      int
+	Profile         string
 }
 
 // Node configuration is used to configure the node process as well

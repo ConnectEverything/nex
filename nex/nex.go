@@ -16,6 +16,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nkeys"
 	controlapi "github.com/synadia-io/nex/control-api"
+	rfs "github.com/synadia-io/nex/internal/fc-image"
 	"github.com/synadia-io/nex/internal/models"
 	natslogger "github.com/synadia-io/nex/internal/nats-logger"
 	nextui "github.com/synadia-io/nex/nex/tui"
@@ -137,9 +138,10 @@ func init() {
 
 	rootfs.Flag("output", "Output name").Short('o').Default("rootfs.ext4.gz").StringVar(&RootfsOpts.OutName)
 	rootfs.Flag("script", "Additional boot script ran during initialization").PlaceHolder("script.sh").StringVar(&RootfsOpts.BuildScriptPath)
-	rootfs.Flag("image", "Base image for rootfs build").Default("synadia/nex-rootfs:alpine").StringVar(&RootfsOpts.BaseImage)
+	rootfs.Flag("image", "Base image for rootfs build").PlaceHolder("synadia/nex-rootfs:alpine").StringVar(&RootfsOpts.BaseImage)
 	rootfs.Flag("agent", "Path to agent binary").PlaceHolder("../path/to/nex-agent").Required().StringVar(&RootfsOpts.AgentBinaryPath)
 	rootfs.Flag("size", "Size of rootfs filesystem").Default(strconv.Itoa(1024 * 1024 * 150)).IntVar(&RootfsOpts.RootFSSize) // 150MB default
+	rootfs.Flag("profile", "preconfigued rootfs profiles for quick use").PlaceHolder("oci").EnumVar(&RootfsOpts.Profile, rfs.Profiles...)
 
 	nodesLs.Flag("full", "List more detailed table").Default("false").UnNegatableBoolVar(&NodeOpts.ListFull)
 
