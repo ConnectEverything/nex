@@ -296,11 +296,11 @@ func (u Up) Run(ctx context.Context, globals *Globals, n *Node) error {
 		return printTable("Node Up Configuration", append(globals.Table(), u.Table()...)...)
 	}
 
-	nc, err := configureNatsConnection(globals)
-	if err != nil {
-		return err
-	}
-
+	// nc, err := configureNatsConnection(globals)
+	// if err != nil {
+	// 	return err
+	// }
+	var err error
 	var kp nkeys.KeyPair
 	if u.NodeSeed == "" {
 		kp, err = nkeys.CreateServer()
@@ -319,9 +319,9 @@ func (u Up) Run(ctx context.Context, globals *Globals, n *Node) error {
 		return err
 	}
 
-	logger := configureLogger(globals, nc, pubKey, u.ShowSystemLogs)
+	logger := configureLogger(globals, nil, pubKey, u.ShowSystemLogs)
 
-	nexNode, err := node.NewNexNode(kp, nc,
+	nexNode, err := node.NewNexNode(kp, nil,
 		options.WithLogger(logger),
 		options.WithNodeName(u.NodeName),
 		options.WithNexus(u.NexusName),

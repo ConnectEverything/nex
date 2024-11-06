@@ -43,9 +43,9 @@ type nexNode struct {
 }
 
 func NewNexNode(serverKey nkeys.KeyPair, nc *nats.Conn, opts ...models.NodeOption) (Node, error) {
-	if nc == nil {
-		return nil, fmt.Errorf("no nats connection provided")
-	}
+	// if nc == nil {
+	// 	return nil, fmt.Errorf("no nats connection provided")
+	// }
 
 	rng := fname.NewGenerator()
 	nodeName, err := rng.Generate()
@@ -218,6 +218,7 @@ func (nn *nexNode) initializeSupervisionTree() error {
 	}
 
 	allCreds := inats.CredentialsMap()
+	time.Sleep(1 * time.Second)
 
 	_, err = nn.actorSystem.Spawn(nn.ctx, actors.HostServicesActorName, actors.CreateHostServices(nn.options.HostServiceOptions))
 	if err != nil {
@@ -241,6 +242,14 @@ func (nn *nexNode) initializeSupervisionTree() error {
 	pk, err := nn.publicKey.PublicKey()
 	if err != nil {
 		return err
+	}
+
+	if nn.nc == nil {
+		nn.options.Logger.Debug("Connecting to nats server", slog.Any("url", inats.URL()))
+		nn.nc, err = nats.Connect(inats.URL(), nats.UserInfo("admin", "admin"))
+		if err != nil {
+			return nil
+		}
 	}
 
 	_, err = nn.actorSystem.Spawn(nn.ctx, actors.ControlAPIActorName,

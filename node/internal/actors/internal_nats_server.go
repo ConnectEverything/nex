@@ -35,6 +35,10 @@ type InternalNatsServer struct {
 	storeDir string
 }
 
+func (ns *InternalNatsServer) URL() string {
+	return ns.server.ClientURL()
+}
+
 func CreateInternalNatsServer(options models.NodeOptions) *InternalNatsServer {
 	ns := &InternalNatsServer{nodeOptions: options, logger: options.Logger}
 
@@ -236,6 +240,7 @@ accounts: {
 	nexhost: {
 		jetstream: true
 		users: [
+      {user: "admin", password: "admin"}
 			{nkey: "{{ .NexHostUserPublic }}"}
 		]
 		exports: [
