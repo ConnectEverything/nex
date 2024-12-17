@@ -436,16 +436,16 @@ func TestDirectStop(t *testing.T) {
 		t.Fatal(err)
 	}
 	nex1.SysProcAttr = sysProcAttr()
-	nex1.Stdout = os.Stdout
-	nex1.Stderr = os.Stderr
+	// nex1.Stdout = os.Stdout
+	// nex1.Stderr = os.Stderr
 
 	nex2, err := startNexNodeCmd(t, workingDir, "", "", s.ClientURL(), "node2", "nexus")
 	if err != nil {
 		t.Fatal(err)
 	}
 	nex2.SysProcAttr = sysProcAttr()
-	nex2.Stdout = os.Stdout
-	nex2.Stderr = os.Stderr
+	// nex2.Stdout = os.Stdout
+	// nex2.Stderr = os.Stderr
 
 	err = nex1.Start()
 	if err != nil {
