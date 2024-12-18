@@ -106,7 +106,7 @@ message GetRunRequest {
 message NoEnvRunRequest {
   map<string, string> clear_env = 1;
   StartWorkload run_request = 2;
-} 
+}
 
 // Reply from the agent actor containing the results of the attempt to start a workload
 message WorkloadStarted {
@@ -140,6 +140,9 @@ message WorkloadList {
 
 message SpawnDirectStartProcess {}
 message KillDirectStartProcess {}
+
+message SpawnDockerContainer {}
+message KillDockerContainer {}
 
 message GetNodeInfo {}
 message NodeInfo {
