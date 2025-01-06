@@ -203,7 +203,7 @@ func TestFileArtifact(t *testing.T) {
 	if ref.OriginalLocation != uri {
 		t.Errorf("expected %s, got %s", uri, ref.OriginalLocation)
 	}
-	if !strings.HasPrefix(ref.LocalCachePath, filepath.Join(os.TempDir(), "workload-")) {
+	if ref.LocalCachePath != strings.TrimPrefix(ref.OriginalLocation, "file://") {
 		t.Errorf("expected %s, got %s", filepath.Join(os.TempDir(), "workload-"), ref.LocalCachePath)
 	}
 	if ref.Digest != binHash {

@@ -82,32 +82,8 @@ func cacheFile(logger *slog.Logger, name string, uri *uri) (*ArtifactReference, 
 	}
 	defer fOrig.Close()
 
-	fCache, err := os.CreateTemp(os.TempDir(), getFileName())
-	if err != nil {
-		return nil, err
-	}
-	defer fCache.Close()
-
-	if _, err = io.Copy(fCache, fOrig); err != nil {
-		return nil, err
-	}
-
-	fCacheInfo, err := fCache.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := fCache.Seek(0, io.SeekStart); err != nil {
-		return nil, err
-	}
-
 	hasher := sha256.New()
-	if _, err := io.Copy(hasher, fCache); err != nil {
-		return nil, err
-	}
-
-	err = os.Chmod(fCache.Name(), 0755)
-	if err != nil {
+	if _, err := io.Copy(hasher, fOrig); err != nil {
 		return nil, err
 	}
 
@@ -115,9 +91,9 @@ func cacheFile(logger *slog.Logger, name string, uri *uri) (*ArtifactReference, 
 		Name:             name,
 		Tag:              uri.tag,
 		OriginalLocation: uri.schema + "://" + uri.path,
-		LocalCachePath:   fCache.Name(),
+		LocalCachePath:   fOrig.Name(),
 		Digest:           hex.EncodeToString(hasher.Sum(nil)),
-		Size:             int(fCacheInfo.Size()),
+		Size:             int(info.Size()),
 	}, nil
 }
 
